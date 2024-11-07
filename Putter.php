@@ -298,6 +298,33 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                             } else {
                                                 $this->error("Model $modelName not found!");
                                             }
+
+                                        }
+                                    ],
+                                    [
+                                        "command" => 'show-models',
+                                        "description" => 'Display all models.',
+                                        "action" => function () {
+
+                                            $modelFiles = glob(app_path('Models') . '/*.php');
+                                            $models = [];
+
+                                            foreach ($modelFiles as $file) {
+                                                // Get the model class name without the extension
+                                                $model = basename($file, '.php');
+
+                                                // Construct the fully qualified class name
+                                                $class = "App\\Models\\$model";
+
+                                                // Check if the class exists
+                                                if (class_exists($class)) {
+                                                    $models[] = $model;
+                                                }
+                                            }
+
+                                            // Display the models in a single column
+                                            $this->table(['Models'], array_map(fn($model) => [$model], $models));
+
                                         }
                                     ]
                                 ];
