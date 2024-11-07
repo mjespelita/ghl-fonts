@@ -31,12 +31,24 @@ class Putter extends Command
      */
     public function handle()
     {
+
+        echo "\n";
+        echo "\n";
+        echo "Welcome to Putter.\n";
+        $this->info('by Mark Jason Espelita');
+        echo "\n";
+        $this->line("\e[33mType --help to display available commands.\e[0m");
+
         while (true) {
             $queries = [
                 [
                     "command" => 'motivate',
                     "description" => 'Display motivational qoute',
                     "action" => function () {
+
+                        // Clear the console screen
+                        $this->line("\e[H\e[2J");
+
                         $this->info(Inspiring::quote());
                     }
                 ],
@@ -58,13 +70,20 @@ class Putter extends Command
                                 $queries = [
                                     [
                                         "command" => 'logout',
-                                        "description" => 'Logout',
-                                        "action" => function () {}
+                                        "description" => 'Bye!',
+                                        "action" => function () {
+                                            // Clear the console screen
+                                            $this->line("\e[H\e[2J");
+                                        }
                                     ],
                                     [
                                         "command" => 'motivate',
                                         "description" => 'Display motivational qoute',
                                         "action" => function () {
+
+                                            // Clear the console screen
+                                            $this->line("\e[H\e[2J");
+
                                             $this->info(Inspiring::quote());
                                         }
                                     ],
@@ -96,22 +115,24 @@ class Putter extends Command
                                             $modelName = $this->ask('Model Name');
                                             $attr = $this->ask('Table Attributes (in JSON format, e.g., [{"col": "column1", "validate": "required", "dataType": "string"}])');
 
+                                            // Clear the console screen
+                                            $this->line("\e[H\e[2J");
+
                                             // Check if the JSON was valid
                                             if (json_last_error() !== JSON_ERROR_NONE) {
                                                 $this->error('Invalid JSON format. Please provide a valid JSON string.');
                                                 return;
                                             }
 
+                                            echo "Initializing model...\n";
                                             // initialize model -a
                                             shell_exec("php artisan make:model $modelName -a");
-
-                                            echo "Initializing model...\n";
                                             $this->info("SUCCESS: Model initialized.\n");
 
                                             // Decode the JSON input into an associative array
                                             $attributes = json_decode($attr, true);
 
-                                            // EDIT MODEL FILE ===============================================================================
+                                            // EDIT MODEL FILE ===========================================================================================================
 
                                             echo "Modifying model...\n";
 
@@ -133,7 +154,7 @@ class Putter extends Command
 
                                             $this->info("SUCCESS: Model modified.\n");
 
-                                            // EDIT MIGRATION FILE =================================================================================
+                                            // EDIT MIGRATION FILE =======================================================================================================
 
                                             echo "Modifying migration...\n";
 
@@ -156,7 +177,7 @@ class Putter extends Command
 
                                             $this->info("SUCCESS: Migration modified.\n");
 
-                                            // EDIT REQUESTS =========================================================================
+                                            // EDIT REQUESTS =============================================================================================================
 
                                             echo "Modifying store request...\n";
 
@@ -196,7 +217,7 @@ class Putter extends Command
 
                                             $this->info("SUCCESS: Update request modified.\n");
 
-                                            // APPEND ROUTES TO web.php
+                                            // APPEND ROUTES TO web.php ====================================================================================================
 
                                             echo "Appending routes...\n";
 
@@ -255,6 +276,9 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                             $modelName = $this->ask('Model Name');
                                             $selectedColumns = $this->ask('Columns (separated with commas)');
 
+                                            // Clear the console screen
+                                            $this->line("\e[H\e[2J");
+
                                             // Convert the selected columns into an array
                                             $columns = explode(',', $selectedColumns);
 
@@ -266,16 +290,25 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                                 // Get the data from the model with the selected columns
                                                 $data = $modelClass::select($columns)->get();
 
+                                                $this->info($modelName . " Table");
+
                                                 // Display the table with the selected columns and associated data
                                                 $this->table($columns, $data->toArray());
+
                                             } else {
                                                 $this->error("Model $modelName not found!");
                                             }
                                         }
-                                    ],
+                                    ]
                                 ];
 
+                                echo "\n";
+
                                 $query = $this->ask("Putter - ".$user->name);
+
+                                // Clear the console screen
+                                $this->line("\e[H\e[2J");
+
                                 $found = false;
 
                                 foreach ($queries as $value) {
@@ -289,24 +322,35 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
 
                                 }
 
-                                if ($query === 'help') {
-                                    echo "Available Commands... \n";
-                                    echo "\n";
+                                if ($query === '--help') {
+                                    $this->info("Available Commands: " . count($queries));
+                                    $this->line(""); // Add a blank line for spacing
+
+                                    // Define a fixed width for the command column
+                                    $commandWidth = 20;
+
                                     foreach ($queries as $key => $value) {
-                                        $this->info($value['command'] . ' .......... ' . $value['description']);
+                                        // Pad the command with dashes to ensure alignment
+                                        $command = str_pad($value['command'], $commandWidth, ' ', STR_PAD_RIGHT);
+                                        $description = $value['description'];
+
+                                        // Output the command and description in aligned format
+                                        $this->info($command . "-> " . $description);
                                     }
-                                    echo "\n";
+
+                                    $this->line(""); // Add a blank line at the end for spacing
                                 }
 
                                 if ($query === 'logout') {
                                     break;
                                 }
 
-                                if (!$found && $query != 'help' && $query != 'logout') {
-                                    $this->info('Invalid Command');
+                                if (!$found && $query != '--help' && $query != 'logout') {
+                                    $this->error('Invalid Command  "' . $query . '"');
                                 }
 
-                                $this->info('Press CTRL + C to exit.');
+                                echo "\e[34mPress CTRL + C to exit.\e[0m\n";  // Blue text
+                                echo "\e[33mType --help to display available commands.\e[0m\n";  // Yellow text
                             }
 
                             // END OF APPLICATION
@@ -336,7 +380,13 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                 ]
             ];
 
+            echo "\n";
+
             $query = $this->ask('Putter');
+
+            // Clear the console screen
+            $this->line("\e[H\e[2J");
+
             $found = false;
 
             foreach ($queries as $value) {
@@ -350,20 +400,31 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
 
             }
 
-            if ($query === 'help') {
-                echo "Available Commands... \n";
-                echo "\n";
+            if ($query === '--help') {
+                $this->info("Available Commands: " . count($queries));
+                $this->line(""); // Add a blank line for spacing
+
+                // Define a fixed width for the command column
+                $commandWidth = 20;
+
                 foreach ($queries as $key => $value) {
-                    $this->info($value['command'] . ' .......... ' . $value['description']);
+                    // Pad the command with dashes to ensure alignment
+                    $command = str_pad($value['command'], $commandWidth, ' ', STR_PAD_RIGHT);
+                    $description = $value['description'];
+
+                    // Output the command and description in aligned format
+                    $this->info($command . "-> " . $description);
                 }
-                echo "\n";
+
+                $this->line(""); // Add a blank line at the end for spacing
             }
 
-            if (!$found && $query != 'help') {
-                $this->info('Invalid Command');
+            if (!$found && $query != '--help') {
+                $this->error('Invalid Command  "' . $query . '"');
             }
 
-            $this->info('Press CTRL + C to exit.');
+            echo "\e[34mPress CTRL + C to exit.\e[0m\n";  // Blue text
+            echo "\e[33mType --help to display available commands.\e[0m\n";  // Yellow text
         }
     }
 }
