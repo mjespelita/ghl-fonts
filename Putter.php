@@ -577,6 +577,55 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
 
                                             $this->table(['Method', 'URI', 'Name', 'Action'], $routes->toArray());
                                         }
+                                    ],
+                                    [
+                                        "command" => 'input-command',
+                                        "description" => 'Execute a custom Eloquent query on a specified model.',
+                                        "action" => function () {
+                                            // Step 1: Get a list of all models
+                                            $modelFiles = glob(app_path('Models') . '/*.php');
+                                            $models = [];
+
+                                            foreach ($modelFiles as $file) {
+                                                $model = basename($file, '.php');
+                                                $class = "App\\Models\\$model";
+
+                                                if (class_exists($class)) {
+                                                    $models[] = $model;
+                                                }
+                                            }
+
+                                            // Display available models in a table format
+                                            $this->table(['Models'], array_map(fn($model) => [$model], $models));
+
+                                            // Step 2: Prompt the user to select a model
+                                            $modelName = $this->ask('Model Name');
+                                            $modelClass = "App\\Models\\$modelName";
+
+                                            if (class_exists($modelClass)) {
+                                                // Step 3: Prompt for Eloquent query input
+                                                $this->info("Write a full Eloquent query for the $modelName model (e.g., where('column', 'value')->get()).");
+                                                $queryInput = $this->ask('Eloquent Query');
+
+                                                try {
+                                                    // Step 4: Evaluate and execute the query dynamically
+                                                    $query = eval("return $modelClass::$queryInput;");
+
+                                                    // Step 5: Check if the query result is empty or not
+                                                    if ($query->isEmpty()) {
+                                                        $this->warn("No records found.");
+                                                    } else {
+                                                        // Display the query result in a table
+                                                        $columns = array_keys($query->first()->toArray());
+                                                        $this->table($columns, $query->toArray());
+                                                    }
+                                                } catch (\Throwable $e) {
+                                                    $this->error("Invalid query or error executing the query: " . $e->getMessage());
+                                                }
+                                            } else {
+                                                $this->error("Model $modelName not found!");
+                                            }
+                                        }
                                     ]
 
                                 ];
