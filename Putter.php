@@ -9,6 +9,8 @@ use Illuminate\Console\Command;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
 class Putter extends Command
 {
@@ -17,7 +19,7 @@ class Putter extends Command
      *
      * @var string
      */
-    protected $signature = 'unleash:hell';
+    protected $signature = 'putter';
 
     /**
      * The console command description.
@@ -46,10 +48,15 @@ class Putter extends Command
                     "description" => 'Display motivational qoute',
                     "action" => function () {
 
+                        $this->info(Inspiring::quote());
+                    }
+                ],
+                [
+                    "command" => 'clear',
+                    "description" => 'Clear console.',
+                    "action" => function () {
                         // Clear the console screen
                         $this->line("\e[H\e[2J");
-
-                        $this->info(Inspiring::quote());
                     }
                 ],
                 [
@@ -72,8 +79,7 @@ class Putter extends Command
                                         "command" => 'logout',
                                         "description" => 'Bye!',
                                         "action" => function () {
-                                            // Clear the console screen
-                                            $this->line("\e[H\e[2J");
+
                                         }
                                     ],
                                     [
@@ -81,15 +87,20 @@ class Putter extends Command
                                         "description" => 'Display motivational qoute',
                                         "action" => function () {
 
-                                            // Clear the console screen
-                                            $this->line("\e[H\e[2J");
-
                                             $this->info(Inspiring::quote());
                                         }
                                     ],
                                     [
+                                        "command" => 'clear',
+                                        "description" => 'Clear console.',
+                                        "action" => function () {
+                                            // Clear the console screen
+                                            $this->line("\e[H\e[2J");
+                                        }
+                                    ],
+                                    [
                                         "command" => 'generate-crud',
-                                        "description" => 'Generate CRUD',
+                                        "description" => 'Generate CRUD (Model, Migration, Request, Views, and Routes)',
                                         "action" => function () {
 
                                             function putter($path, $pattern, $data) {
@@ -115,8 +126,7 @@ class Putter extends Command
                                             $modelName = $this->ask('Model Name');
                                             $attr = $this->ask('Table Attributes (in JSON format, e.g., [{"col": "column1", "validate": "required", "dataType": "string"}])');
 
-                                            // Clear the console screen
-                                            $this->line("\e[H\e[2J");
+
 
                                             // Check if the JSON was valid
                                             if (json_last_error() !== JSON_ERROR_NONE) {
@@ -268,33 +278,64 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                         }
                                     ],
                                     [
-                                        "command" => 'table-show',
+                                        "command" => 'show-table',
                                         "description" => 'Display database table.',
                                         "action" => function () {
 
-                                            // Ask for the model name and columns to display
+                                            // Display Available Models
+
+                                            // Load all models in the Models directory
+                                            $modelFiles = glob(app_path('Models') . '/*.php');
+                                            $models = [];
+
+                                            $this->info('Select Model');
+
+                                            // Loop through the files and add each model to the list
+                                            foreach ($modelFiles as $file) {
+                                                $model = basename($file, '.php');
+                                                $class = "App\\Models\\$model";
+
+                                                if (class_exists($class)) {
+                                                    $models[] = $model;
+                                                }
+                                            }
+
+                                            // Display the list of models in a table format
+                                            $this->table(['Models'], array_map(fn($model) => [$model], $models));
+
+                                            // Ask for the model name
                                             $modelName = $this->ask('Model Name');
-                                            $selectedColumns = $this->ask('Columns (separated with commas)');
-
-                                            // Clear the console screen
-                                            $this->line("\e[H\e[2J");
-
-                                            // Convert the selected columns into an array
-                                            $columns = explode(',', $selectedColumns);
-
-                                            // Resolve the model class dynamically
                                             $modelClass = 'App\\Models\\' . $modelName;
 
-                                            // Check if the model exists
                                             if (class_exists($modelClass)) {
-                                                // Get the data from the model with the selected columns
-                                                $data = $modelClass::select($columns)->get();
+                                                // Instantiate the model and get the table name
+                                                $instance = new $modelClass;
+                                                $table = $instance->getTable();
 
-                                                $this->info($modelName . " Table");
+                                                // Check if the table exists
+                                                if (Schema::hasTable($table)) {
+                                                    // Get the column names for the table
+                                                    $availableColumns = Schema::getColumnListing($table);
 
-                                                // Display the table with the selected columns and associated data
-                                                $this->table($columns, $data->toArray());
+                                                    // Display the available columns in a table format
+                                                    $this->info("Available Columns for $modelName:");
+                                                    $this->table(['Columns'], array_map(fn($column) => [$column], $availableColumns));
 
+                                                    // Ask the user to select columns from the available columns
+                                                    $selectedColumns = $this->ask('Columns to display (separated by commas)');
+
+                                                    // Convert the selected columns into an array and filter by available columns
+                                                    $columns = array_intersect(explode(',', $selectedColumns), $availableColumns);
+
+                                                    // Fetch and display data for the selected columns
+                                                    $data = $modelClass::select($columns)->get();
+
+                                                    $this->info("$modelName Table");
+                                                    $this->table($columns, $data->toArray());
+
+                                                } else {
+                                                    $this->error("Table for $modelName not found!");
+                                                }
                                             } else {
                                                 $this->error("Model $modelName not found!");
                                             }
@@ -326,15 +367,223 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                             $this->table(['Models'], array_map(fn($model) => [$model], $models));
 
                                         }
+                                    ],
+                                    [
+                                        "command" => 'input-data',
+                                        "description" => 'Input data for a selected model based on its columns, excluding auto-managed columns.',
+                                        "action" => function () {
+                                            // Step 1: Get list of all models
+                                            $modelFiles = glob(app_path('Models') . '/*.php');
+                                            $models = [];
+
+                                            foreach ($modelFiles as $file) {
+                                                $model = basename($file, '.php');
+                                                $class = "App\\Models\\$model";
+
+                                                if (class_exists($class)) {
+                                                    $models[] = $model;
+                                                }
+                                            }
+
+                                            // Display available models in a table format
+                                            $this->table(['Models'], array_map(fn($model) => [$model], $models));
+
+                                            // Step 2: Prompt the user to select a model
+                                            $modelName = $this->ask('Model Name');
+                                            $modelClass = "App\\Models\\$modelName";
+
+                                            if (class_exists($modelClass)) {
+                                                // Instantiate the model and get the table name
+                                                $instance = new $modelClass;
+                                                $table = $instance->getTable();
+
+                                                // Step 3: Check if the table exists and get columns
+                                                if (Schema::hasTable($table)) {
+                                                    // Get the column names and data types, excluding 'id', 'created_at', and 'updated_at'
+                                                    $columns = Schema::getColumnListing($table);
+                                                    $columnDataTypes = collect($columns)
+                                                        ->reject(fn($column) => in_array($column, ['id', 'created_at', 'updated_at']))
+                                                        ->mapWithKeys(function ($column) use ($table) {
+                                                            return [$column => Schema::getColumnType($table, $column)];
+                                                        });
+
+                                                    // Display columns with data types
+                                                    $this->info("Available Columns for $modelName (excluding auto-managed columns):");
+                                                    $this->table(['Column', 'Data Type'], $columnDataTypes->map(fn($type, $column) => [$column, $type])->toArray());
+
+                                                    // Step 4: Gather input for each column
+                                                    $inputData = [];
+                                                    foreach ($columnDataTypes as $column => $type) {
+                                                        $value = $this->ask("Enter value for $column ($type):");
+                                                        $inputData[$column] = $value;
+                                                    }
+
+                                                    // Step 5: Insert data into the model's table
+                                                    $instance->fill($inputData);
+                                                    $instance->save();
+
+                                                    $this->info("Data successfully inserted into $modelName.");
+
+                                                } else {
+                                                    $this->error("Table for $modelName not found!");
+                                                }
+                                            } else {
+                                                $this->error("Model $modelName not found!");
+                                            }
+                                        }
+                                    ],
+                                    [
+                                        "command" => 'update-data',
+                                        "description" => 'Update data for a selected model based on its columns, excluding auto-managed columns.',
+                                        "action" => function () {
+                                            // Step 1: Get list of all models
+                                            $modelFiles = glob(app_path('Models') . '/*.php');
+                                            $models = [];
+
+                                            foreach ($modelFiles as $file) {
+                                                $model = basename($file, '.php');
+                                                $class = "App\\Models\\$model";
+
+                                                if (class_exists($class)) {
+                                                    $models[] = $model;
+                                                }
+                                            }
+
+                                            // Display available models in a table format
+                                            $this->table(['Models'], array_map(fn($model) => [$model], $models));
+
+                                            // Step 2: Prompt the user to select a model
+                                            $modelName = $this->ask('Model Name');
+                                            $modelClass = "App\\Models\\$modelName";
+
+                                            if (class_exists($modelClass)) {
+                                                // Instantiate the model and get the table name
+                                                $instance = new $modelClass;
+                                                $table = $instance->getTable();
+
+                                                // Step 3: Check if the table exists and get columns
+                                                if (Schema::hasTable($table)) {
+                                                    // Get the column names and data types, excluding 'id', 'created_at', and 'updated_at'
+                                                    $columns = Schema::getColumnListing($table);
+                                                    $columnDataTypes = collect($columns)
+                                                        ->reject(fn($column) => in_array($column, ['id', 'created_at', 'updated_at']))
+                                                        ->mapWithKeys(function ($column) use ($table) {
+                                                            return [$column => Schema::getColumnType($table, $column)];
+                                                        });
+
+                                                    // Display columns with data types
+                                                    $this->info("Available Columns for $modelName (excluding auto-managed columns):");
+                                                    $this->table(['Column', 'Data Type'], $columnDataTypes->map(fn($type, $column) => [$column, $type])->toArray());
+
+                                                    // Step 4: Ask for the record ID to update
+                                                    $recordId = $this->ask('Enter the ID of the record to update');
+                                                    $record = $modelClass::find($recordId);
+
+                                                    if ($record) {
+                                                        $this->info("Current data for record ID $recordId:");
+                                                        $this->table(array_keys($record->toArray()), [array_values($record->toArray())]);
+
+                                                        // Step 5: Gather updated values for each column
+                                                        $updatedData = [];
+                                                        foreach ($columnDataTypes as $column => $type) {
+                                                            $currentValue = $record->$column;
+                                                            $newValue = $this->ask("Enter new value for $column ($type) [Current: $currentValue]");
+
+                                                            // Only update if a new value is provided
+                                                            if (!is_null($newValue) && $newValue !== '') {
+                                                                $updatedData[$column] = $newValue;
+                                                            }
+                                                        }
+
+                                                        // Update the record with new data
+                                                        $record->update($updatedData);
+
+                                                        $this->info("Record ID $recordId successfully updated in $modelName.");
+
+                                                    } else {
+                                                        $this->error("Record with ID $recordId not found in $modelName.");
+                                                    }
+
+                                                } else {
+                                                    $this->error("Table for $modelName not found!");
+                                                }
+                                            } else {
+                                                $this->error("Model $modelName not found!");
+                                            }
+                                        }
+                                    ],
+                                    [
+                                        "command" => 'delete-data',
+                                        "description" => 'Delete data for a selected model based on record ID.',
+                                        "action" => function () {
+                                            // Step 1: Get list of all models
+                                            $modelFiles = glob(app_path('Models') . '/*.php');
+                                            $models = [];
+
+                                            foreach ($modelFiles as $file) {
+                                                $model = basename($file, '.php');
+                                                $class = "App\\Models\\$model";
+
+                                                if (class_exists($class)) {
+                                                    $models[] = $model;
+                                                }
+                                            }
+
+                                            // Display available models in a table format
+                                            $this->table(['Models'], array_map(fn($model) => [$model], $models));
+
+                                            // Step 2: Prompt the user to select a model
+                                            $modelName = $this->ask('Model Name');
+                                            $modelClass = "App\\Models\\$modelName";
+
+                                            if (class_exists($modelClass)) {
+                                                // Step 3: Ask for the record ID to delete
+                                                $recordId = $this->ask('Enter the ID of the record to delete');
+                                                $record = $modelClass::find($recordId);
+
+                                                if ($record) {
+                                                    // Display the record details before deleting
+                                                    $this->info("Details of record ID $recordId:");
+                                                    $this->table(array_keys($record->toArray()), [array_values($record->toArray())]);
+
+                                                    // Confirm deletion
+                                                    if ($this->confirm("Are you sure you want to delete this record? This action cannot be undone.", false)) {
+                                                        $record->delete();
+                                                        $this->info("Record ID $recordId successfully deleted from $modelName.");
+                                                    } else {
+                                                        $this->info("Deletion canceled.");
+                                                    }
+
+                                                } else {
+                                                    $this->error("Record with ID $recordId not found in $modelName.");
+                                                }
+                                            } else {
+                                                $this->error("Model $modelName not found!");
+                                            }
+                                        }
+                                    ],
+                                    [
+                                        "command" => 'list-routes',
+                                        "description" => 'List all registered routes with URI, Method, and Action.',
+                                        "action" => function () {
+                                            $routes = collect(Route::getRoutes())->map(function ($route) {
+                                                return [
+                                                    'Method' => implode('|', $route->methods),
+                                                    'URI' => $route->uri,
+                                                    'Name' => $route->getName(),
+                                                    'Action' => $route->getActionName()
+                                                ];
+                                            });
+
+                                            $this->table(['Method', 'URI', 'Name', 'Action'], $routes->toArray());
+                                        }
                                     ]
+
                                 ];
 
                                 echo "\n";
 
                                 $query = $this->ask("Putter - ".$user->name);
-
-                                // Clear the console screen
-                                $this->line("\e[H\e[2J");
 
                                 $found = false;
 
@@ -410,9 +659,6 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
             echo "\n";
 
             $query = $this->ask('Putter');
-
-            // Clear the console screen
-            $this->line("\e[H\e[2J");
 
             $found = false;
 
