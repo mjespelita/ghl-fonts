@@ -160,7 +160,7 @@ class Putter extends Command
 
                                             $insertText = "\nprotected \$fillable = " . $insertable . ";";
 
-                                            putter($modelPath, '//', $insertText);
+                                            putter($modelPath, '*/', $insertText);
 
                                             $this->info("SUCCESS: Model modified.\n");
 
