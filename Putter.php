@@ -86,7 +86,6 @@ class Putter extends Command
                                         "command" => 'motivate',
                                         "description" => 'Display motivational qoute',
                                         "action" => function () {
-
                                             $this->info(Inspiring::quote());
                                         }
                                     ],
@@ -625,6 +624,101 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                             } else {
                                                 $this->error("Model $modelName not found!");
                                             }
+                                        }
+                                    ],
+                                    [
+                                        "command" => 'smark',
+                                        "description" => 'Display Smark classes and functions.',
+                                        "action" => function () {
+                                            $smark = [
+                                                '*** ARRAYER ***',
+                                                'Arrayer::flattenArray($array)',
+                                                'Arrayer::uniqueMultidimensionalArray($array, $key)',
+                                                '*** STRINGER ***',
+                                                'Stringer::toCamelCase($string)',
+                                                'Stringer::truncateString($string, $length)',
+                                                'Stringer::sanitizeInput($input)',
+                                                'Stringer::generateSlug($string)',
+                                                '*** DATER ***',
+                                                'Dater::calculateAge($dob)',
+                                                'Dater::humanReadableDateWithDayAndTime($date)   // Month day, Year (Day of the week) hour:minute am/pm',
+                                                'Dater::humanReadableDateWithDay($date)          // Month day, Year (Day of the week)',
+                                                'Dater::humanReadableDate($date)                 // Month day, Year',
+                                                'Dater::humanReadableDay($date)                  // Day of the week',
+                                                'Dater::humanReadableTime($date)                 // hour:minute am/pm',
+                                                'Dater::humanReadableMonth($date)                // Month word',
+                                                'Dater::getWeekdays($startDate, $endDate)',
+                                                'Dater::getDays($startDate, $endDate)',
+                                                '*** ENCRYPTER ***',
+                                                'Encryption::encrypter($data, $key)',
+                                                'Encryption::decrypter($data, $key)',
+                                                '*** EXCEL ***',
+                                                'Excel::downloadExcel($excelArray, $source)',
+                                                'Excel::downloadExcelAs($filename, $excelArray, $source)',
+                                                'Excel::_downloadExcel($excelArray, $source)',
+                                                'Excel::_downloadExcelAs($filename, $excelArray, $source)',
+                                                '*** FILE ***',
+                                                'File::$filename',
+                                                'File::upload($request, $path)',
+                                                'File::removeFile($path)',
+                                                'File::$_filename',
+                                                'File::_upload($filename_input, $file_path, $filename_valid_extension)',
+                                                '*** HTML ***',
+                                                'HTML::renderHTML($code)',
+                                                'HTML::withURL($string)',
+                                                'HTML::generateQRCode($data)',
+                                                'HTML::generateBarCode($data)',
+                                                'HTML::filamentMonths()',
+                                                'HTML::filamentYears($startYear)',
+                                                'HTML::readMarkdown()',
+                                                '*** JSON ***',
+                                                'JSON::jsonRead($json_filename)',
+                                                'JSON::jsonPush($json_filename, $data_to_be_inserted)',
+                                                'JSON::jsonUnshift($json_filename, $data_to_be_inserted)',
+                                                'JSON::jsonDelete($json_filename, $data_key_to_be_deleted, $data_value_to_be_deleted)',
+                                                'JSON::jsonUpdate($json_filename, $data_key_to_be_updated, $data_value_to_be_updated, $key_to_insert_new_updated_data, $new_updated_data)',
+                                                'JSON::handleError($message)',
+                                                '*** MAIL ***',
+                                                'Mail::send()',
+                                                'Mail::sendFromForm()',
+                                                '*** MATH ***',
+                                                'Math::compute($method, $nums)',
+                                                'Math::isEven($num)',
+                                                'Math::linearRegression($xValues, $yValues, $result)',
+                                                'Math::calculateTotalPrice($items, $discountThreshold, $discountRate, $taxRate)',
+                                                'Math::calculateBMI($weight, $height)',
+                                                'Math::generateReceiptNumber()',
+                                                'Math::factorial($number)',
+                                                'Math::fibonacci($n)',
+                                                'Math::calculateQuadraticRoots($a, $b, $c)',
+                                                'Math::gcd($a, $b)',
+                                                'Math::matrixMultiply($matrixA, $matrixB)',
+                                                'Math::gaussianElimination($matrix)',
+                                                '*** PAYMENT ***',
+                                                'Payment::paymongoCreatePaymentLink($paymentDetails)',
+                                                '*** PDFER ***',
+                                                'PDFer::export($data)',
+                                                '*** QUEUE ***',
+                                                'Queue::push($task)',
+                                                'Queue::run()',
+                                                '*** WEB ***',
+                                                'Web::scrapeWithCssSelectors($url, $cssSelectors)',
+                                                'Web::extractScriptsAndLinks($url)',
+                                                'Web::extractEmails($url)',
+                                                'Web::extractImages($url)',
+                                            ];
+                                            $this->info("Installation: composer require smark/smark");
+                                            $this->line(""); // Add a blank line for spacing
+                                            $this->info("Available Functions: " . count($smark));
+                                            $this->line(""); // Add a blank line for spacing
+
+                                            // Define a fixed width for the func column
+
+                                            foreach ($smark as $key => $value) {
+                                                $this->info($value);
+                                            }
+
+                                            $this->line(""); // Add a blank line at the end for spacing
                                         }
                                     ]
 
