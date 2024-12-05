@@ -2,12 +2,9 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Facebook;
-use App\Models\Instagram;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
