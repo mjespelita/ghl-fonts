@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class Putter extends Command
 {
@@ -771,8 +772,30 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                             }
                                         }
                                     ],
+                                    [
+                                        "command" => 'generate-lorem',
+                                        "description" => 'Generate Lorem Ipsum text',
+                                        "action" => function () {
+                                            // Ask the user for the length of the Lorem Ipsum text
+                                            $count = $this->ask('How many words of Lorem Ipsum would you like to generate?', 100); // Default to 100 if no input
 
+                                            // Ensure the length is an integer
+                                            $count = (int) $count;
 
+                                            // Validate that the length is a positive integer
+                                            if ($count <= 0) {
+                                                $this->error('Please enter a valid positive number for the length.');
+                                                return;
+                                            }
+
+                                            // Generate Lorem Ipsum text (use a package like "faker" or create your own generator)
+                                            $lorem = \Faker\Factory::create()->text($count * 5); // Multiply by 5 because text() returns a string of roughly 5 words per "word length"
+
+                                            // Display the generated Lorem Ipsum text
+                                            $this->info("\"$lorem\"");
+                                            echo "\n";
+                                        }
+                                    ]
                                 ];
 
                                 echo "\n";
