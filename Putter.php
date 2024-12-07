@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 
@@ -629,14 +630,19 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                         "action" => function () {
                                             $smark = [
                                                 '*** ARRAYER ***',
+                                                '',
                                                 'Arrayer::flattenArray($array)',
                                                 'Arrayer::uniqueMultidimensionalArray($array, $key)',
+                                                '',
                                                 '*** STRINGER ***',
+                                                '',
                                                 'Stringer::toCamelCase($string)',
                                                 'Stringer::truncateString($string, $length)',
                                                 'Stringer::sanitizeInput($input)',
                                                 'Stringer::generateSlug($string)',
+                                                '',
                                                 '*** DATER ***',
+                                                '',
                                                 'Dater::calculateAge($dob)',
                                                 'Dater::humanReadableDateWithDayAndTime($date)   // Month day, Year (Day of the week) hour:minute am/pm',
                                                 'Dater::humanReadableDateWithDay($date)          // Month day, Year (Day of the week)',
@@ -646,21 +652,29 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                                 'Dater::humanReadableMonth($date)                // Month word',
                                                 'Dater::getWeekdays($startDate, $endDate)',
                                                 'Dater::getDays($startDate, $endDate)',
+                                                '',
                                                 '*** ENCRYPTER ***',
+                                                '',
                                                 'Encryption::encrypter($data, $key)',
                                                 'Encryption::decrypter($data, $key)',
+                                                '',
                                                 '*** EXCEL ***',
+                                                '',
                                                 'Excel::downloadExcel($excelArray, $source)',
                                                 'Excel::downloadExcelAs($filename, $excelArray, $source)',
                                                 'Excel::_downloadExcel($excelArray, $source)',
                                                 'Excel::_downloadExcelAs($filename, $excelArray, $source)',
+                                                '',
                                                 '*** FILE ***',
+                                                '',
                                                 'File::$filename',
                                                 'File::upload($request, $path)',
                                                 'File::removeFile($path)',
                                                 'File::$_filename',
                                                 'File::_upload($filename_input, $file_path, $filename_valid_extension)',
+                                                '',
                                                 '*** HTML ***',
+                                                '',
                                                 'HTML::renderHTML($code)',
                                                 'HTML::withURL($string)',
                                                 'HTML::generateQRCode($data)',
@@ -668,17 +682,23 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                                 'HTML::filamentMonths()',
                                                 'HTML::filamentYears($startYear)',
                                                 'HTML::readMarkdown()',
+                                                '',
                                                 '*** JSON ***',
+                                                '',
                                                 'JSON::jsonRead($json_filename)',
                                                 'JSON::jsonPush($json_filename, $data_to_be_inserted)',
                                                 'JSON::jsonUnshift($json_filename, $data_to_be_inserted)',
                                                 'JSON::jsonDelete($json_filename, $data_key_to_be_deleted, $data_value_to_be_deleted)',
                                                 'JSON::jsonUpdate($json_filename, $data_key_to_be_updated, $data_value_to_be_updated, $key_to_insert_new_updated_data, $new_updated_data)',
                                                 'JSON::handleError($message)',
+                                                '',
                                                 '*** MAIL ***',
+                                                '',
                                                 'Mail::send()',
                                                 'Mail::sendFromForm()',
+                                                '',
                                                 '*** MATH ***',
+                                                '',
                                                 'Math::compute($method, $nums)',
                                                 'Math::isEven($num)',
                                                 'Math::linearRegression($xValues, $yValues, $result)',
@@ -691,14 +711,22 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                                 'Math::gcd($a, $b)',
                                                 'Math::matrixMultiply($matrixA, $matrixB)',
                                                 'Math::gaussianElimination($matrix)',
+                                                '',
                                                 '*** PAYMENT ***',
+                                                '',
                                                 'Payment::paymongoCreatePaymentLink($paymentDetails)',
+                                                '',
                                                 '*** PDFER ***',
+                                                '',
                                                 'PDFer::export($data)',
+                                                '',
                                                 '*** QUEUE ***',
+                                                '',
                                                 'Queue::push($task)',
                                                 'Queue::run()',
+                                                '',
                                                 '*** WEB ***',
+                                                '',
                                                 'Web::scrapeWithCssSelectors($url, $cssSelectors)',
                                                 'Web::extractScriptsAndLinks($url)',
                                                 'Web::extractEmails($url)',
@@ -717,7 +745,33 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
 
                                             $this->line(""); // Add a blank line at the end for spacing
                                         }
-                                    ]
+                                    ],
+                                    [
+                                        "command" => 'test-mail',
+                                        "description" => 'Send a test email to verify email functionality.',
+                                        "action" => function () {
+                                            // Prompt the user for the email address
+                                            $email = $this->ask('Please enter the email address to send the test email to');
+
+                                            // Validate the email format
+                                            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                                                // Prompt the user for a custom message
+                                                $messageContent = $this->ask('Please enter the message to include in the test email');
+
+                                                // Send the test email with the user-provided message
+                                                Mail::raw($messageContent, function ($message) use ($email) {
+                                                    $message->to($email)->subject('Test Email');
+                                                });
+
+                                                // Inform the user that the email has been sent
+                                                $this->info("Test email successfully sent to {$email}");
+                                            } else {
+                                                // If the email is not valid, show an error message
+                                                $this->error("The email address '{$email}' is not valid.");
+                                            }
+                                        }
+                                    ],
+
 
                                 ];
 
