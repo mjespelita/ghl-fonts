@@ -822,6 +822,11 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                     // Define a fixed width for the command column
                                     $commandWidth = 20;
 
+                                    // Sort the $queries array alphabetically by 'command' value
+                                    usort($queries, function($a, $b) {
+                                        return strcmp($a['command'], $b['command']);
+                                    });
+
                                     foreach ($queries as $key => $value) {
                                         // Pad the command with dashes to ensure alignment
                                         $command = str_pad($value['command'], $commandWidth, ' ', STR_PAD_RIGHT);
