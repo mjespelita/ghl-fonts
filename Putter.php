@@ -273,6 +273,270 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                             echo "Migrating new table...\n";
                                             shell_exec("php artisan migrate"); // show
                                             $this->info("SUCCESS: New table migrated.\n");
+
+
+                                            // EDIT CONTROLLER =============================================================================================================
+
+
+                                            echo "Modifying controller...\n";
+                                            /**
+                                             * Updates the controller file with new code, completely replacing its content.
+                                             *
+                                             * @param string $controllerPath The path to the controller file.
+                                             * @param string $newCode The new code to insert into the controller.
+                                             * @return bool Returns true if the operation is successful, false otherwise.
+                                             */
+                                            function updateControllerMethods($controllerPath, $newCode) {
+                                                // Check if the controller file exists
+                                                if (!file_exists($controllerPath)) {
+                                                    echo "Controller file does not exist.\n";
+                                                    return false;
+                                                }
+
+                                                // Write the new code to the controller file, replacing the entire content
+                                                $result = file_put_contents($controllerPath, $newCode);
+
+                                                if ($result === false) {
+                                                    echo "Failed to write to the controller file.\n";
+                                                    return false;
+                                                }
+                                                return true;
+                                            }
+
+                                            // Example usage:
+                                            $controllerPath = 'app/Http/Controllers/'.$modelName.'Controller.php'; // Path to your controller file
+                                            $newCode = <<<PHP
+                                            <?php
+
+                                            namespace App\Http\Controllers;
+
+                                            use App\Models\{$modelName};
+                                            use App\Http\Requests\Store{$modelName}Request;
+                                            use App\Http\Requests\Update{$modelName}Request;
+
+                                            class {$modelName}Controller extends Controller {
+                                                /**
+                                                 * Display a listing of the resource.
+                                                 */
+                                                public function index()
+                                                {
+                                                    return view('{$modelNameLowerCase}.{$modelNameLowerCase}');
+                                                }
+
+                                                /**
+                                                 * Show the form for creating a new resource.
+                                                 */
+                                                public function create()
+                                                {
+                                                    return view('{$modelNameLowerCase}.create-{$modelNameLowerCase}');
+                                                }
+
+                                                /**
+                                                 * Store a newly created resource in storage.
+                                                 */
+                                                public function store(Store{$modelName}Request \$request)
+                                                {
+                                                    {$modelName}::create([
+                                                        'name' => \$request->name,
+                                                        'status' => \$request->status,
+                                                    ]);
+
+                                                    return back()->with('success', '{$modelName} Added Successfully!');
+                                                }
+
+                                                /**
+                                                 * Display the specified resource.
+                                                 */
+                                                public function show({$modelName} \${$modelNameLowerCase})
+                                                {
+                                                    return view('{$modelNameLowerCase}.show-{$modelNameLowerCase}', [
+                                                        '{$modelNameLowerCase}' => {$modelName}::all()
+                                                    ]);
+                                                }
+
+                                                /**
+                                                 * Show the form for editing the specified resource.
+                                                 */
+                                                public function edit({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
+                                                {
+                                                    return view('{$modelNameLowerCase}.edit-{$modelNameLowerCase}', [
+                                                        '{$modelNameLowerCase}' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
+                                                    ]);
+                                                }
+
+                                                /**
+                                                 * Update the specified resource in storage.
+                                                 */
+                                                public function update(Update{$modelName}Request \$request, {$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
+                                                {
+                                                    {$modelName}::where('id', \${$modelNameLowerCase}Id)->update([
+                                                        'name' => \$request->name,
+                                                        'status' => \$request->status,
+                                                    ]);
+
+                                                    return back()->with('success', '{$modelName} Updated Successfully!');
+                                                }
+
+                                                /**
+                                                 * Show the form for deleting the specified resource.
+                                                 */
+                                                public function delete({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
+                                                {
+                                                    return view('{$modelNameLowerCase}.delete-{$modelNameLowerCase}', [
+                                                        '{$modelNameLowerCase}' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
+                                                    ]);
+                                                }
+
+                                                /**
+                                                 * Remove the specified resource from storage.
+                                                 */
+                                                public function destroy({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
+                                                {
+                                                    {$modelName}::where('id', \${$modelNameLowerCase}Id)->delete();
+
+                                                    return redirect('/{$modelNameLowerCase}');
+                                                }
+                                            }
+                                            PHP;
+
+                                            // Call the function to update the controller
+                                            updateControllerMethods($controllerPath, $newCode);
+
+                                            $this->info("SUCCESS: Controller modified.\n");
+                                        }
+                                    ],
+                                    [
+                                        "command" => 'controller-populate',
+                                        "description" => 'Populate controller with resource functions',
+                                        "action" => function () {
+                                            $modelName = $this->ask('Select Model Name');
+                                            $modelNameLowerCase = strtolower($modelName);
+
+                                            echo "Modifying controller...\n";
+                                            /**
+                                             * Updates the controller file with new code, completely replacing its content.
+                                             *
+                                             * @param string $controllerPath The path to the controller file.
+                                             * @param string $newCode The new code to insert into the controller.
+                                             * @return bool Returns true if the operation is successful, false otherwise.
+                                             */
+                                            function updateControllerMethodsOnly($controllerPath, $newCode) {
+                                                // Check if the controller file exists
+                                                if (!file_exists($controllerPath)) {
+                                                    echo "Controller file does not exist.\n";
+                                                    return false;
+                                                }
+
+                                                // Write the new code to the controller file, replacing the entire content
+                                                $result = file_put_contents($controllerPath, $newCode);
+
+                                                if ($result === false) {
+                                                    echo "Failed to write to the controller file.\n";
+                                                    return false;
+                                                }
+                                                return true;
+                                            }
+
+                                            // Example usage:
+                                            $controllerPath = 'app/Http/Controllers/'.$modelName.'Controller.php'; // Path to your controller file
+                                            $newCode = <<<PHP
+                                            <?php
+
+                                            namespace App\Http\Controllers;
+
+                                            use App\Models\{$modelName};
+                                            use App\Http\Requests\Store{$modelName}Request;
+                                            use App\Http\Requests\Update{$modelName}Request;
+
+                                            class {$modelName}Controller extends Controller {
+                                                /**
+                                                 * Display a listing of the resource.
+                                                 */
+                                                public function index()
+                                                {
+                                                    return view('{$modelNameLowerCase}.{$modelNameLowerCase}');
+                                                }
+
+                                                /**
+                                                 * Show the form for creating a new resource.
+                                                 */
+                                                public function create()
+                                                {
+                                                    return view('{$modelNameLowerCase}.create-{$modelNameLowerCase}');
+                                                }
+
+                                                /**
+                                                 * Store a newly created resource in storage.
+                                                 */
+                                                public function store(Store{$modelName}Request \$request)
+                                                {
+                                                    {$modelName}::create([
+                                                        'name' => \$request->name,
+                                                        'status' => \$request->status,
+                                                    ]);
+
+                                                    return back()->with('success', '{$modelName} Added Successfully!');
+                                                }
+
+                                                /**
+                                                 * Display the specified resource.
+                                                 */
+                                                public function show({$modelName} \${$modelNameLowerCase})
+                                                {
+                                                    return view('{$modelNameLowerCase}.show-{$modelNameLowerCase}', [
+                                                        '{$modelNameLowerCase}' => {$modelName}::all()
+                                                    ]);
+                                                }
+
+                                                /**
+                                                 * Show the form for editing the specified resource.
+                                                 */
+                                                public function edit({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
+                                                {
+                                                    return view('{$modelNameLowerCase}.edit-{$modelNameLowerCase}', [
+                                                        '{$modelNameLowerCase}' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
+                                                    ]);
+                                                }
+
+                                                /**
+                                                 * Update the specified resource in storage.
+                                                 */
+                                                public function update(Update{$modelName}Request \$request, {$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
+                                                {
+                                                    {$modelName}::where('id', \${$modelNameLowerCase}Id)->update([
+                                                        'name' => \$request->name,
+                                                        'status' => \$request->status,
+                                                    ]);
+
+                                                    return back()->with('success', '{$modelName} Updated Successfully!');
+                                                }
+
+                                                /**
+                                                 * Show the form for deleting the specified resource.
+                                                 */
+                                                public function delete({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
+                                                {
+                                                    return view('{$modelNameLowerCase}.delete-{$modelNameLowerCase}', [
+                                                        '{$modelNameLowerCase}' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
+                                                    ]);
+                                                }
+
+                                                /**
+                                                 * Remove the specified resource from storage.
+                                                 */
+                                                public function destroy({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
+                                                {
+                                                    {$modelName}::where('id', \${$modelNameLowerCase}Id)->delete();
+
+                                                    return redirect('/{$modelNameLowerCase}');
+                                                }
+                                            }
+                                            PHP;
+
+                                            // Call the function to update the controller
+                                            updateControllerMethodsOnly($controllerPath, $newCode);
+
+                                            $this->info("SUCCESS: Controller modified.\n");
                                         }
                                     ],
                                     [
