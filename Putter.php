@@ -233,15 +233,15 @@ class Putter extends Command
                                             $modelNameLowerCase = strtolower($modelName);
 
                                             $textToAppend = "
-Route::get('/{$modelNameLowerCase}', [{$modelName}Controller::class, 'index']);
-Route::get('/create-{$modelNameLowerCase}', [{$modelName}Controller::class, 'create']);
-Route::get('/edit-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelName}Controller::class, 'edit']);
-Route::get('/show-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelName}Controller::class, 'show']);
-Route::get('/delete-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelName}Controller::class, 'delete']);
-Route::get('/destroy-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelName}Controller::class, 'destroy']);
-Route::post('/store-{$modelNameLowerCase}', [{$modelName}Controller::class, 'store']);
-Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelName}Controller::class, 'update']);
-                                            ";
+Route::get('/{$modelNameLowerCase}', [{$modelName}Controller::class, 'index'])->name('{$modelNameLowerCase}.index');
+Route::get('/create-{$modelNameLowerCase}', [{$modelName}Controller::class, 'create'])->name('{$modelNameLowerCase}.create');
+Route::get('/edit-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelName}Controller::class, 'edit'])->name('{$modelNameLowerCase}.edit');
+Route::get('/show-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelName}Controller::class, 'show'])->name('{$modelNameLowerCase}.show');
+Route::get('/delete-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelName}Controller::class, 'delete'])->name('{$modelNameLowerCase}.delete');
+Route::get('/destroy-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelName}Controller::class, 'destroy'])->name('{$modelNameLowerCase}.destroy');
+Route::post('/store-{$modelNameLowerCase}', [{$modelName}Controller::class, 'store'])->name('{$modelNameLowerCase}.store');
+Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelName}Controller::class, 'update'])->name('{$modelNameLowerCase}.update');
+";
 
                                             // Append the text to the file
                                             if (file_put_contents($filePath, $textToAppend, FILE_APPEND) !== false) {
@@ -252,21 +252,142 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
 
                                             // GENERATE VIEWS
 
-                                            echo "Creating view $modelNameLowerCase/$modelNameLowerCase.blade.php...\n";
-                                            shell_exec("php artisan make:view $modelNameLowerCase.$modelNameLowerCase"); // index
-                                            $this->info("SUCCESS: View $modelNameLowerCase/$modelNameLowerCase.blade.php created.\n");
-                                            echo "Creating view $modelNameLowerCase/create-$modelNameLowerCase.blade.php...\n";
-                                            shell_exec("php artisan make:view $modelNameLowerCase.create-$modelNameLowerCase"); // create
-                                            $this->info("SUCCESS: View $modelNameLowerCase/create-$modelNameLowerCase.blade.php created.\n");
-                                            echo "Creating view $modelNameLowerCase/edit-$modelNameLowerCase.blade.php...\n";
-                                            shell_exec("php artisan make:view $modelNameLowerCase.edit-$modelNameLowerCase"); // edit
-                                            $this->info("SUCCESS: View $modelNameLowerCase/edit-$modelNameLowerCase.blade.php created.\n");
-                                            echo "Creating view $modelNameLowerCase/delete-$modelNameLowerCase.blade.php...\n";
-                                            shell_exec("php artisan make:view $modelNameLowerCase.delete-$modelNameLowerCase"); // delete
-                                            $this->info("SUCCESS: View $modelNameLowerCase/delete-$modelNameLowerCase.blade.php created.\n");
-                                            echo "Creating view $modelNameLowerCase/show-$modelNameLowerCase.blade.php...\n";
-                                            shell_exec("php artisan make:view $modelNameLowerCase.show-$modelNameLowerCase"); // show
-                                            $this->info("SUCCESS: View $modelNameLowerCase/show-$modelNameLowerCase.blade.php created.\n");
+                                            // Create the index view (show a table/list)
+echo "Creating view $modelNameLowerCase/$modelNameLowerCase.blade.php...\n";
+shell_exec("php artisan make:view $modelNameLowerCase.$modelNameLowerCase"); // index
+file_put_contents(resource_path("views/$modelNameLowerCase/$modelNameLowerCase.blade.php"), "
+@extends('layouts.main')
+
+@section('content')
+    <h1>All $modelNameLowerCase</h1>
+    <table class='table'>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(\App\Models\\".ucfirst($modelNameLowerCase)."::all() as \$item)
+                <tr>
+                    <td>{{ \$item->id }}</td>
+                    <td>{{ \$item->name }}</td>
+                    <td>{{ \$item->status }}</td>
+                    <td>
+                        <a href='{{ route('$modelNameLowerCase.edit', \$item->id) }}' class='btn btn-primary'>Edit</a>
+                        <a href='{{ route('$modelNameLowerCase.show', \$item->id) }}' class='btn btn-info'>Show</a>
+                        <a href='{{ route('$modelNameLowerCase.delete', \$item->id) }}' class='btn btn-danger'>Delete</a>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+@endsection
+");
+$this->info("SUCCESS: View $modelNameLowerCase/$modelNameLowerCase.blade.php created.\n");
+
+// Create the create view (form to create a new item)
+echo "Creating view $modelNameLowerCase/create-$modelNameLowerCase.blade.php...\n";
+shell_exec("php artisan make:view $modelNameLowerCase.create-$modelNameLowerCase"); // create
+file_put_contents(resource_path("views/$modelNameLowerCase/create-$modelNameLowerCase.blade.php"), "
+@extends('layouts.main')
+
+@section('content')
+    <h1>Create a new $modelNameLowerCase</h1>
+
+    <form action='{{ route('$modelNameLowerCase.store') }}' method='POST'>
+        @csrf
+        <div class='form-group'>
+            <label for='name'>Name</label>
+            <input type='text' class='form-control' id='name' name='name' required>
+        </div>
+
+        <div class='form-group'>
+            <label for='status'>Status</label>
+            <input type='text' class='form-control' id='status' name='status' required>
+        </div>
+
+        <button type='submit' class='btn btn-primary'>Create</button>
+    </form>
+@endsection
+");
+$this->info("SUCCESS: View $modelNameLowerCase/create-$modelNameLowerCase.blade.php created.\n");
+
+// Create the edit view (form to edit an existing item)
+echo "Creating view $modelNameLowerCase/edit-$modelNameLowerCase.blade.php...\n";
+shell_exec("php artisan make:view $modelNameLowerCase.edit-$modelNameLowerCase"); // edit
+file_put_contents(resource_path("views/$modelNameLowerCase/edit-$modelNameLowerCase.blade.php"), "
+@extends('layouts.main')
+
+@section('content')
+    <h1>Edit $modelNameLowerCase</h1>
+
+    <form action='{{ route('$modelNameLowerCase.update', \$item->id) }}' method='POST'>
+        @csrf
+        <div class='form-group'>
+            <label for='name'>Name</label>
+            <input type='text' class='form-control' id='name' name='name' value='{{ \$item->name }}' required>
+        </div>
+
+        <div class='form-group'>
+            <label for='status'>Status</label>
+            <input type='text' class='form-control' id='status' name='status' value='{{ \$item->status }}' required>
+        </div>
+
+        <button type='submit' class='btn btn-primary'>Update</button>
+    </form>
+@endsection
+");
+$this->info("SUCCESS: View $modelNameLowerCase/edit-$modelNameLowerCase.blade.php created.\n");
+
+// Create the delete view (confirmation message)
+echo "Creating view $modelNameLowerCase/delete-$modelNameLowerCase.blade.php...\n";
+shell_exec("php artisan make:view $modelNameLowerCase.delete-$modelNameLowerCase"); // delete
+file_put_contents(resource_path("views/$modelNameLowerCase/delete-$modelNameLowerCase.blade.php"), "
+@extends('layouts.main')
+
+@section('content')
+    <h1>Are you sure you want to delete this $modelNameLowerCase?</h1>
+
+    <form action='{{ route('$modelNameLowerCase.destroy', \$item->id) }}' method='GET'>
+        @csrf
+        @method('DELETE')
+        <button type='submit' class='btn btn-danger'>Yes, Delete</button>
+        <a href='{{ route('$modelNameLowerCase.index') }}' class='btn btn-secondary'>Cancel</a>
+    </form>
+@endsection
+");
+$this->info("SUCCESS: View $modelNameLowerCase/delete-$modelNameLowerCase.blade.php created.\n");
+
+// Create the show view (show item details in a table)
+echo "Creating view $modelNameLowerCase/show-$modelNameLowerCase.blade.php...\n";
+shell_exec("php artisan make:view $modelNameLowerCase.show-$modelNameLowerCase"); // show
+file_put_contents(resource_path("views/$modelNameLowerCase/show-$modelNameLowerCase.blade.php"), "
+@extends('layouts.main')
+
+@section('content')
+    <h1>$modelNameLowerCase Details</h1>
+    <table class='table'>
+        <tr>
+            <th>ID</th>
+            <td>{{ \$item->id }}</td>
+        </tr>
+        <tr>
+            <th>Name</th>
+            <td>{{ \$item->name }}</td>
+        </tr>
+        <tr>
+            <th>Status</th>
+            <td>{{ \$item->status }}</td>
+        </tr>
+    </table>
+
+    <a href='{{ route('$modelNameLowerCase.index') }}' class='btn btn-primary'>Back to List</a>
+@endsection
+");
+$this->info("SUCCESS: View $modelNameLowerCase/show-$modelNameLowerCase.blade.php created.\n");
 
                                             // MIGRATING NEW TABLE
 
@@ -347,10 +468,10 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                                 /**
                                                  * Display the specified resource.
                                                  */
-                                                public function show({$modelName} \${$modelNameLowerCase})
+                                                public function show({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
                                                 {
                                                     return view('{$modelNameLowerCase}.show-{$modelNameLowerCase}', [
-                                                        '{$modelNameLowerCase}' => {$modelName}::all()
+                                                        'item' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
                                                     ]);
                                                 }
 
@@ -360,7 +481,7 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                                 public function edit({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
                                                 {
                                                     return view('{$modelNameLowerCase}.edit-{$modelNameLowerCase}', [
-                                                        '{$modelNameLowerCase}' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
+                                                        'item' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
                                                     ]);
                                                 }
 
@@ -383,7 +504,7 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                                 public function delete({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
                                                 {
                                                     return view('{$modelNameLowerCase}.delete-{$modelNameLowerCase}', [
-                                                        '{$modelNameLowerCase}' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
+                                                        'item' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
                                                     ]);
                                                 }
 
@@ -484,7 +605,7 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                                 public function show({$modelName} \${$modelNameLowerCase})
                                                 {
                                                     return view('{$modelNameLowerCase}.show-{$modelNameLowerCase}', [
-                                                        '{$modelNameLowerCase}' => {$modelName}::all()
+                                                        'item' => {$modelName}::all()
                                                     ]);
                                                 }
 
@@ -494,7 +615,7 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                                 public function edit({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
                                                 {
                                                     return view('{$modelNameLowerCase}.edit-{$modelNameLowerCase}', [
-                                                        '{$modelNameLowerCase}' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
+                                                        'item' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
                                                     ]);
                                                 }
 
@@ -517,7 +638,7 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                                 public function delete({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
                                                 {
                                                     return view('{$modelNameLowerCase}.delete-{$modelNameLowerCase}', [
-                                                        '{$modelNameLowerCase}' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
+                                                        'item' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
                                                     ]);
                                                 }
 
