@@ -97,6 +97,263 @@ class Putter extends Command
                                         }
                                     ],
                                     [
+                                        "command" => 'generate-template',
+                                        "description" => 'Generates main.blade.php template',
+                                        "action" => function () {
+
+// creating notification
+
+echo "Creating view notification component...\n";
+shell_exec("php artisan make:component MainNotification"); // index
+
+file_put_contents(resource_path("views/components/main-notification.blade.php"), "
+<div style='text-align: right;'>
+    @if (session()->has('success'))
+    <p class='alert alert-success text-success mb-0'><i class='fas fa-check'></i> {{ session()->get('success') }}</p>
+    @endif
+
+    @if (session()->has('error'))
+        <p class='alert alert-danger text-danger mb-0'><i class='fas fa-warning'></i> {{ session()->get('error') }}</p>
+    @endif
+
+    @if (\$errors->any())
+        @foreach (\$errors->all() as \$err)
+            <p class='alert alert-danger text-danger mb-0'><i class='fas fa-warning'></i> {{ \$err }}</p>
+        @endforeach
+    @endif
+</div>
+");
+$this->info("SUCCESS: Notifications created successfully.\n");
+
+// creating main template
+
+echo "Creating view layouts/main.blade.php...\n";
+shell_exec("php artisan make:view layouts/main"); // index
+
+file_put_contents(resource_path("views/layouts/main.blade.php"), "
+<!DOCTYPE html>
+<html lang='{{ str_replace('_', '-', app()->getLocale()) }}'>
+    <head>
+        <meta charset='utf-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1'>
+        <meta name='csrf-token' content='{{ csrf_token() }}'>
+
+        <title>{{ config('app.name', 'Laravel') }}</title>
+
+        <link href='{{ url('assets/bootstrap/bootstrap.min.css') }}' rel='stylesheet'>
+        <!-- FontAwesome for icons -->
+        <link href='{{ url('assets/font-awesome/css/all.min.css') }}' rel='stylesheet'>
+        <link rel='stylesheet' href='{{ url('assets/custom/style.css') }}'>
+
+        <style>
+            body {
+                font-family: 'Arial', sans-serif;
+                background-color: #f4f7fc;
+            }
+
+            .btn-success, .btn-info, .btn-primary {
+                background: black !important;
+                border: none;
+            }
+
+            #mobileSidebar {
+                z-index: 1;
+            }
+
+            .sidebar {
+                height: 100vh;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 240px;
+                background-color: #003618;
+                color: white;
+                transition: all 0.3s;
+                padding-top: 60px;
+                overflow-x: scroll;
+            }
+
+            .sidebar img {
+                width: 50% !important;
+            }
+
+            .sidebar a {
+                color: white;
+                text-decoration: none;
+                padding: 15px 20px;
+                display: block;
+                font-size: 16px;
+                transition: background 0.3s;
+            }
+
+            .sidebar a:hover {
+                background-color: #00632b;
+            }
+
+            .sidebar a i {
+                margin-right: 10px;
+            }
+
+            .sidebar .logo {
+                text-align: center;
+                font-size: 24px;
+                font-weight: bold;
+                color: #ecf0f1;
+                margin-bottom: 30px;
+            }
+
+            .sidebar .logo img {
+                width: 50px;
+            }
+
+            .content {
+                margin-left: 240px;
+                padding: 20px;
+                transition: margin-left 0.3s;
+            }
+
+            .navbar {
+                background-color: #00632b;
+            }
+
+            .navbar .navbar-brand {
+                color: white;
+            }
+
+            .navbar .navbar-toggler {
+                border-color: white;
+            }
+
+            .navbar .navbar-toggler-icon {
+                background-color: white;
+            }
+
+            .navbar-nav .nav-link {
+                color: white;
+            }
+
+            .card {
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                margin-bottom: 20px;
+                background-color: white;
+            }
+
+            .card .card-body {
+                padding: 25px;
+            }
+
+            .card:hover {
+                transform: scale(1.02);
+                transition: transform 0.3s;
+            }
+
+            .card-title {
+                font-size: 20px;
+                font-weight: 600;
+            }
+
+            @media (max-width: 768px) {
+                .sidebar {
+                    width: 250px;
+                    position: fixed;
+                    left: -250px;
+                }
+
+                .sidebar.active {
+                    left: 0;
+                }
+
+                .content {
+                    margin-left: 0;
+                }
+
+                .navbar .navbar-toggler {
+                    border-color: white;
+                }
+
+                .navbar .navbar-toggler-icon {
+                    background-color: white;
+                }
+
+                .sidebar-mobile {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 250px;
+                    height: 100%;
+                    background-color: #2c3e50;
+                    z-index: 9999;
+                    display: none;
+                    padding-top: 60px;
+                }
+
+                .sidebar-mobile a {
+                    color: white;
+                    text-decoration: none;
+                    padding: 15px;
+                    display: block;
+                }
+
+                .sidebar-mobile.active {
+                    display: block;
+                }
+
+                .sidebar-mobile a:hover {
+                    background-color: #1abc9c;
+                }
+
+                .content {
+                    margin-left: 0;
+                }
+            }
+        </style>
+
+    </head>
+    <body class='font-sans antialiased'>
+
+        <!-- Sidebar for Desktop View -->
+        <div class='sidebar' id='mobileSidebar'>
+            <div class='logo'>
+                <img src='{{ url('assets/logo.png') }}' alt='' width='100%'>
+            </div>
+            <a href='{{ url('dashboard') }}'><i class='fas fa-tachometer-alt'></i> Dashboard</a>
+            <a href='{{ url('user/profile') }}'><i class='fas fa-user'></i> {{ Auth::user()->name }}</a>
+        </div>
+
+        <!-- Top Navbar -->
+        <nav class='navbar navbar-expand-lg navbar-dark'>
+            <div class='container-fluid'>
+                <button class='navbar-toggler' type='button' data-bs-toggle='collapse' data-bs-target='#navbarNav'
+                    aria-controls='navbarNav' aria-expanded='false' aria-label='Toggle navigation' onclick='toggleSidebar()'>
+                    <i class='fas fa-bars'></i>
+                </button>
+            </div>
+        </nav>
+
+        <x-main-notification />
+
+        <div class='content'>
+            @yield('content')
+        </div>
+
+        <!-- Bootstrap JS and dependencies -->
+        <script src='{{ url('assets/bootstrap/bootstrap.bundle.min.js') }}'></script>
+
+        <!-- Custom JavaScript -->
+        <script>
+            function toggleSidebar() {
+                document.getElementById('mobileSidebar').classList.toggle('active');
+                document.getElementById('sidebar').classList.toggle('active');
+            }
+        </script>
+    </body>
+</html>
+");
+$this->info("SUCCESS: Template layouts/main.blade.php created.\n");
+                                        }
+                                    ],
+                                    [
                                         "command" => 'generate-crud',
                                         "description" => 'Generate CRUD (Model, Migration, Request, Views, and Routes)',
                                         "action" => function () {
@@ -123,8 +380,6 @@ class Putter extends Command
 
                                             $modelName = $this->ask('Model Name');
                                             $attr = $this->ask('Table Attributes (in JSON format, e.g., [{"col": "column1", "validate": "required", "dataType": "string"}])');
-
-
 
                                             // Check if the JSON was valid
                                             if (json_last_error() !== JSON_ERROR_NONE) {
@@ -241,6 +496,18 @@ Route::get('/delete-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelNa
 Route::get('/destroy-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelName}Controller::class, 'destroy'])->name('{$modelNameLowerCase}.destroy');
 Route::post('/store-{$modelNameLowerCase}', [{$modelName}Controller::class, 'store'])->name('{$modelNameLowerCase}.store');
 Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelName}Controller::class, 'update'])->name('{$modelNameLowerCase}.update');
+
+// $modelName Search
+Route::get('/$modelNameLowerCase-search', function (Request \$request) {
+    \$search = \$request->get('search');
+
+    // Perform the search logic
+    $$modelNameLowerCase = $modelName::when(\$search, function (\$query) use (\$search) {
+        return \$query->where('name', 'like', \"%\$search%\");
+    })->paginate(10);
+
+    return view('$modelNameLowerCase.$modelNameLowerCase', compact('$modelNameLowerCase', 'search'));
+});
 ";
 
                                             // Append the text to the file
@@ -255,35 +522,70 @@ Route::post('/update-{$modelNameLowerCase}/{{$modelNameLowerCase}Id}', [{$modelN
                                             // Create the index view (show a table/list)
 echo "Creating view $modelNameLowerCase/$modelNameLowerCase.blade.php...\n";
 shell_exec("php artisan make:view $modelNameLowerCase.$modelNameLowerCase"); // index
+
+$headlinesStringHandler = '';
+$bodyStringHandler = '';
+
+// loop attributes
+foreach ($attributes as $attribute) {
+    $column = $attribute['col'];
+    $headlines = ucfirst($column);
+    $headlinesStringHandler .= '<th>'.$headlines.'</th>';
+    $bodyStringHandler .= '<td>{{ $item->'.$column.' }}</td>';
+}
+
 file_put_contents(resource_path("views/$modelNameLowerCase/$modelNameLowerCase.blade.php"), "
 @extends('layouts.main')
 
 @section('content')
-    <h1>All $modelNameLowerCase</h1>
-    <table class='table'>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach(\App\Models\\".ucfirst($modelNameLowerCase)."::all() as \$item)
+    <div class='row'>
+        <div class='col-lg-6 col-md-6 col-sm-12'>
+            <h1>All $modelName</h1>
+        </div>
+        <div class='col-lg-6 col-md-6 col-sm-12' style='text-align: right;'>
+            <a href='{{ route('$modelNameLowerCase.create') }}'>
+                <button class='btn btn-success' style='font-size: 12px;'><i class='fas fa-plus'></i> Add $modelName</button>
+            </a>
+        </div>
+    </div>
+    <!-- Search Form -->
+    <form action='{{ url('/$modelNameLowerCase-search') }}' method='GET' class='mb-4 mt-2'>
+        <div class='input-group'>
+            <input type='text' name='search' value='{{ request()->get('search') }}' class='form-control' placeholder='Search...'>
+            <div class='input-group-append'>
+                <button class='btn btn-success' type='submit'><i class='fa fa-search'></i></button>
+            </div>
+        </div>
+    </form>
+    <div class='table-responsive'>
+        <table class='table'>
+            <thead>
                 <tr>
-                    <td>{{ \$item->id }}</td>
-                    <td>{{ \$item->name }}</td>
-                    <td>{{ \$item->status }}</td>
-                    <td>
-                        <a href='{{ route('$modelNameLowerCase.edit', \$item->id) }}' class='btn btn-primary'>Edit</a>
-                        <a href='{{ route('$modelNameLowerCase.show', \$item->id) }}' class='btn btn-info'>Show</a>
-                        <a href='{{ route('$modelNameLowerCase.delete', \$item->id) }}' class='btn btn-danger'>Delete</a>
-                    </td>
+                    <th>#</th>
+                    $headlinesStringHandler
+                    <th>Actions</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @forelse($$modelNameLowerCase as \$item)
+                    <tr>
+                        <td>{{ \$item->id }}</td>
+                        $bodyStringHandler
+                        <td>
+                            <a href='{{ route('$modelNameLowerCase.show', \$item->id) }}'><i class='fas fa-eye text-success'></i></a>
+                            <a href='{{ route('$modelNameLowerCase.edit', \$item->id) }}'><i class='fas fa-edit text-info'></i></a>
+                            <a href='{{ route('$modelNameLowerCase.delete', \$item->id) }}'><i class='fas fa-trash text-danger'></i></a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td>No Record...</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    {{ $".$modelNameLowerCase."->links('pagination::bootstrap-5') }}
 @endsection
 ");
 $this->info("SUCCESS: View $modelNameLowerCase/$modelNameLowerCase.blade.php created.\n");
@@ -291,6 +593,21 @@ $this->info("SUCCESS: View $modelNameLowerCase/$modelNameLowerCase.blade.php cre
 // Create the create view (form to create a new item)
 echo "Creating view $modelNameLowerCase/create-$modelNameLowerCase.blade.php...\n";
 shell_exec("php artisan make:view $modelNameLowerCase.create-$modelNameLowerCase"); // create
+
+$formDataHandler = '';
+
+// loop attributes
+foreach ($attributes as $attribute) {
+    $column = $attribute['col'];
+    $headlines = ucfirst($column);
+    $formDataHandler .= "
+        <div class='form-group'>
+            <label for='name'>$headlines</label>
+            <input type='text' class='form-control' id='$column' name='$column' required>
+        </div>
+    ";
+}
+
 file_put_contents(resource_path("views/$modelNameLowerCase/create-$modelNameLowerCase.blade.php"), "
 @extends('layouts.main')
 
@@ -299,17 +616,8 @@ file_put_contents(resource_path("views/$modelNameLowerCase/create-$modelNameLowe
 
     <form action='{{ route('$modelNameLowerCase.store') }}' method='POST'>
         @csrf
-        <div class='form-group'>
-            <label for='name'>Name</label>
-            <input type='text' class='form-control' id='name' name='name' required>
-        </div>
-
-        <div class='form-group'>
-            <label for='status'>Status</label>
-            <input type='text' class='form-control' id='status' name='status' required>
-        </div>
-
-        <button type='submit' class='btn btn-primary'>Create</button>
+        $formDataHandler
+        <button type='submit' class='btn btn-primary mt-3'>Create</button>
     </form>
 @endsection
 ");
@@ -318,25 +626,31 @@ $this->info("SUCCESS: View $modelNameLowerCase/create-$modelNameLowerCase.blade.
 // Create the edit view (form to edit an existing item)
 echo "Creating view $modelNameLowerCase/edit-$modelNameLowerCase.blade.php...\n";
 shell_exec("php artisan make:view $modelNameLowerCase.edit-$modelNameLowerCase"); // edit
+
+$formDataHandler = '';
+
+// loop attributes
+foreach ($attributes as $attribute) {
+    $column = $attribute['col'];
+    $headlines = ucfirst($column);
+    $formDataHandler .= "
+        <div class='form-group'>
+            <label for='name'>$headlines</label>
+            <input type='text' class='form-control' id='$column' name='$column' value='{{ \$item->$column }}' required>
+        </div>
+    ";
+}
+
 file_put_contents(resource_path("views/$modelNameLowerCase/edit-$modelNameLowerCase.blade.php"), "
 @extends('layouts.main')
 
 @section('content')
-    <h1>Edit $modelNameLowerCase</h1>
+    <h1>Edit $modelName</h1>
 
     <form action='{{ route('$modelNameLowerCase.update', \$item->id) }}' method='POST'>
         @csrf
-        <div class='form-group'>
-            <label for='name'>Name</label>
-            <input type='text' class='form-control' id='name' name='name' value='{{ \$item->name }}' required>
-        </div>
-
-        <div class='form-group'>
-            <label for='status'>Status</label>
-            <input type='text' class='form-control' id='status' name='status' value='{{ \$item->status }}' required>
-        </div>
-
-        <button type='submit' class='btn btn-primary'>Update</button>
+        $formDataHandler
+        <button type='submit' class='btn btn-primary mt-3'>Update</button>
     </form>
 @endsection
 ");
@@ -364,24 +678,32 @@ $this->info("SUCCESS: View $modelNameLowerCase/delete-$modelNameLowerCase.blade.
 // Create the show view (show item details in a table)
 echo "Creating view $modelNameLowerCase/show-$modelNameLowerCase.blade.php...\n";
 shell_exec("php artisan make:view $modelNameLowerCase.show-$modelNameLowerCase"); // show
+
+$showDataHandler = '';
+
+// loop attributes
+foreach ($attributes as $attribute) {
+    $column = $attribute['col'];
+    $headlines = ucfirst($column);
+    $showDataHandler .= "
+        <tr>
+            <th>$headlines</th>
+            <td>{{ \$item->$column }}</td>
+        </tr>
+    ";
+}
+
 file_put_contents(resource_path("views/$modelNameLowerCase/show-$modelNameLowerCase.blade.php"), "
 @extends('layouts.main')
 
 @section('content')
-    <h1>$modelNameLowerCase Details</h1>
+    <h1>$modelName Details</h1>
     <table class='table'>
         <tr>
             <th>ID</th>
             <td>{{ \$item->id }}</td>
         </tr>
-        <tr>
-            <th>Name</th>
-            <td>{{ \$item->name }}</td>
-        </tr>
-        <tr>
-            <th>Status</th>
-            <td>{{ \$item->status }}</td>
-        </tr>
+        $showDataHandler
     </table>
 
     <a href='{{ route('$modelNameLowerCase.index') }}' class='btn btn-primary'>Back to List</a>
@@ -424,6 +746,17 @@ $this->info("SUCCESS: View $modelNameLowerCase/show-$modelNameLowerCase.blade.ph
                                                 return true;
                                             }
 
+                                            $controllerDataHandler = [];
+
+                                            // loop attributes
+                                            foreach ($attributes as $attribute) {
+                                                $column = $attribute['col'];
+                                                array_push($controllerDataHandler, "'$column' => \$request->$column");
+                                            }
+
+                                            $stripped = json_encode($controllerDataHandler);
+                                            $encodedControllerDataHandler = str_replace('"', '', $stripped);
+                                            
                                             // Example usage:
                                             $controllerPath = 'app/Http/Controllers/'.$modelName.'Controller.php'; // Path to your controller file
                                             $newCode = <<<PHP
@@ -441,7 +774,9 @@ $this->info("SUCCESS: View $modelNameLowerCase/show-$modelNameLowerCase.blade.ph
                                                  */
                                                 public function index()
                                                 {
-                                                    return view('{$modelNameLowerCase}.{$modelNameLowerCase}');
+                                                    return view('{$modelNameLowerCase}.{$modelNameLowerCase}', [
+                                                        '{$modelNameLowerCase}' => {$modelName}::paginate(10)
+                                                    ]);
                                                 }
 
                                                 /**
@@ -457,10 +792,7 @@ $this->info("SUCCESS: View $modelNameLowerCase/show-$modelNameLowerCase.blade.ph
                                                  */
                                                 public function store(Store{$modelName}Request \$request)
                                                 {
-                                                    {$modelName}::create([
-                                                        'name' => \$request->name,
-                                                        'status' => \$request->status,
-                                                    ]);
+                                                    {$modelName}::create({$encodedControllerDataHandler});
 
                                                     return back()->with('success', '{$modelName} Added Successfully!');
                                                 }
@@ -490,10 +822,7 @@ $this->info("SUCCESS: View $modelNameLowerCase/show-$modelNameLowerCase.blade.ph
                                                  */
                                                 public function update(Update{$modelName}Request \$request, {$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
                                                 {
-                                                    {$modelName}::where('id', \${$modelNameLowerCase}Id)->update([
-                                                        'name' => \$request->name,
-                                                        'status' => \$request->status,
-                                                    ]);
+                                                    {$modelName}::where('id', \${$modelNameLowerCase}Id)->update({$encodedControllerDataHandler});
 
                                                     return back()->with('success', '{$modelName} Updated Successfully!');
                                                 }
@@ -522,140 +851,6 @@ $this->info("SUCCESS: View $modelNameLowerCase/show-$modelNameLowerCase.blade.ph
 
                                             // Call the function to update the controller
                                             updateControllerMethods($controllerPath, $newCode);
-
-                                            $this->info("SUCCESS: Controller modified.\n");
-                                        }
-                                    ],
-                                    [
-                                        "command" => 'controller-populate',
-                                        "description" => 'Populate controller with resource functions',
-                                        "action" => function () {
-                                            $modelName = $this->ask('Select Model Name');
-                                            $modelNameLowerCase = strtolower($modelName);
-
-                                            echo "Modifying controller...\n";
-                                            /**
-                                             * Updates the controller file with new code, completely replacing its content.
-                                             *
-                                             * @param string $controllerPath The path to the controller file.
-                                             * @param string $newCode The new code to insert into the controller.
-                                             * @return bool Returns true if the operation is successful, false otherwise.
-                                             */
-                                            function updateControllerMethodsOnly($controllerPath, $newCode) {
-                                                // Check if the controller file exists
-                                                if (!file_exists($controllerPath)) {
-                                                    echo "Controller file does not exist.\n";
-                                                    return false;
-                                                }
-
-                                                // Write the new code to the controller file, replacing the entire content
-                                                $result = file_put_contents($controllerPath, $newCode);
-
-                                                if ($result === false) {
-                                                    echo "Failed to write to the controller file.\n";
-                                                    return false;
-                                                }
-                                                return true;
-                                            }
-
-                                            // Example usage:
-                                            $controllerPath = 'app/Http/Controllers/'.$modelName.'Controller.php'; // Path to your controller file
-                                            $newCode = <<<PHP
-                                            <?php
-
-                                            namespace App\Http\Controllers;
-
-                                            use App\Models\{$modelName};
-                                            use App\Http\Requests\Store{$modelName}Request;
-                                            use App\Http\Requests\Update{$modelName}Request;
-
-                                            class {$modelName}Controller extends Controller {
-                                                /**
-                                                 * Display a listing of the resource.
-                                                 */
-                                                public function index()
-                                                {
-                                                    return view('{$modelNameLowerCase}.{$modelNameLowerCase}');
-                                                }
-
-                                                /**
-                                                 * Show the form for creating a new resource.
-                                                 */
-                                                public function create()
-                                                {
-                                                    return view('{$modelNameLowerCase}.create-{$modelNameLowerCase}');
-                                                }
-
-                                                /**
-                                                 * Store a newly created resource in storage.
-                                                 */
-                                                public function store(Store{$modelName}Request \$request)
-                                                {
-                                                    {$modelName}::create([
-                                                        'name' => \$request->name,
-                                                        'status' => \$request->status,
-                                                    ]);
-
-                                                    return back()->with('success', '{$modelName} Added Successfully!');
-                                                }
-
-                                                /**
-                                                 * Display the specified resource.
-                                                 */
-                                                public function show({$modelName} \${$modelNameLowerCase})
-                                                {
-                                                    return view('{$modelNameLowerCase}.show-{$modelNameLowerCase}', [
-                                                        'item' => {$modelName}::all()
-                                                    ]);
-                                                }
-
-                                                /**
-                                                 * Show the form for editing the specified resource.
-                                                 */
-                                                public function edit({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
-                                                {
-                                                    return view('{$modelNameLowerCase}.edit-{$modelNameLowerCase}', [
-                                                        'item' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
-                                                    ]);
-                                                }
-
-                                                /**
-                                                 * Update the specified resource in storage.
-                                                 */
-                                                public function update(Update{$modelName}Request \$request, {$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
-                                                {
-                                                    {$modelName}::where('id', \${$modelNameLowerCase}Id)->update([
-                                                        'name' => \$request->name,
-                                                        'status' => \$request->status,
-                                                    ]);
-
-                                                    return back()->with('success', '{$modelName} Updated Successfully!');
-                                                }
-
-                                                /**
-                                                 * Show the form for deleting the specified resource.
-                                                 */
-                                                public function delete({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
-                                                {
-                                                    return view('{$modelNameLowerCase}.delete-{$modelNameLowerCase}', [
-                                                        'item' => {$modelName}::where('id', \${$modelNameLowerCase}Id)->first()
-                                                    ]);
-                                                }
-
-                                                /**
-                                                 * Remove the specified resource from storage.
-                                                 */
-                                                public function destroy({$modelName} \${$modelNameLowerCase}, \${$modelNameLowerCase}Id)
-                                                {
-                                                    {$modelName}::where('id', \${$modelNameLowerCase}Id)->delete();
-
-                                                    return redirect('/{$modelNameLowerCase}');
-                                                }
-                                            }
-                                            PHP;
-
-                                            // Call the function to update the controller
-                                            updateControllerMethodsOnly($controllerPath, $newCode);
 
                                             $this->info("SUCCESS: Controller modified.\n");
                                         }
